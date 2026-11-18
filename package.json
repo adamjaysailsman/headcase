@@ -1,0 +1,10 @@
+{
+  "name": "headcase",
+  "version": "1.0.0",
+  "description": "A party guessing game: write a person, place or thing for the player on your left.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" },
+  "license": "MIT"
+}

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Headcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<style>
+/* Layout: one phone-width column. The bold moment is the headband stripe on each card and the room-code tiles. */
+:root{
+  --ink:#12123B;
+  --blue:#2A35E8;
+  --blue-deep:#1F27BD;
+  --sun:#FFD83D;
+  --paper:#FFFFFF;
+  --display:'Bricolage Grotesque','Arial Narrow',system-ui,sans-serif;
+  --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--blue);color:var(--paper);font:400 17px/1.4 var(--body);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+h1,h2,h3,p,ol,ul{margin:0}
+ul,ol{padding:0;list-style:none}
+button,input{font-family:inherit}
+.wrap{min-height:100%;display:flex;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.col{width:100%;max-width:520px;display:flex;flex-direction:column;gap:22px}
+#view{display:flex;flex-direction:column;gap:22px}
+:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.brand b{display:flex;align-items:center;gap:10px;font:800 15px/1 var(--display);font-variation-settings:"wdth" 80;letter-spacing:.1em;text-transform:uppercase}
+.brand b i{display:block;width:30px;height:10px;border-radius:2px;background:var(--sun)}
+
+h1,h2{font-family:var(--display);font-variation-settings:"wdth" 82;font-weight:800;text-wrap:balance;line-height:1}
+.hero{font-size:clamp(42px,13.5vw,66px);letter-spacing:-.01em}
+h2{font-size:26px}
+.lede{font-size:18px;max-width:34ch;opacity:.95}
+.stack{display:flex;flex-direction:column;gap:14px}
+.small{font-size:14px;opacity:.85}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.eyebrow{font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+input[type=text]{width:100%;height:56px;border:0;border-radius:14px;padding:0 16px;font:600 20px var(--body);color:var(--ink);background:#fff}
+input[type=text]::placeholder{color:#8486B8;font-weight:500}
+input[type=text]:disabled{opacity:.75}
+input.codein{text-align:center;text-transform:uppercase;letter-spacing:.4em;padding-left:.4em;font:800 28px var(--display);font-variation-settings:"wdth" 82}
+
+.btn{appearance:none;border:0;border-radius:16px;min-height:56px;padding:0 20px;width:100%;cursor:pointer;font:800 18px var(--display);font-variation-settings:"wdth" 88;color:#fff;background:transparent;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.btn.primary{background:var(--sun);color:var(--ink);box-shadow:0 4px 0 #B39600}
+.btn.primary:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #B39600}
+.btn.ghost{box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+.btn.sm{white-space:nowrap;width:auto;min-height:44px;padding:0 16px;font-size:16px;border-radius:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn.sm.ghost:disabled{box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+.link{appearance:none;border:0;background:none;color:#fff;font:600 15px var(--body);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px;padding:0 4px}
+
+.or{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.or::before,.or::after{content:"";flex:1;height:2px;background:rgba(255,255,255,.25)}
+.how{display:flex;flex-direction:column;gap:10px;counter-reset:s}
+.how li{display:flex;gap:12px;align-items:baseline;counter-increment:s}
+.how li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font:800 14px var(--display)}
+
+.banner{background:#fff;color:var(--ink);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;font-weight:600}
+.banner[hidden]{display:none}
+.banner button{appearance:none;border:0;background:none;color:var(--ink);font:800 18px var(--body);cursor:pointer;min-width:32px;min-height:32px}
+
+.tiles{display:flex;gap:10px;justify-content:center;padding:4px 0}
+.tile{width:min(20vw,90px);aspect-ratio:3/4;background:#fff;color:var(--ink);border-radius:14px;display:grid;place-items:center;font:800 clamp(46px,16vw,76px)/1 var(--display);font-variation-settings:"wdth" 80;box-shadow:0 6px 0 rgba(0,0,0,.28)}
+.tile:nth-child(odd){transform:rotate(-2.5deg)}
+.tile:nth-child(even){transform:rotate(2deg)}
+.codebox{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+
+.panel{background:var(--blue-deep);border-radius:20px;padding:6px 16px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid rgba(255,255,255,.14)}
+.row:first-child{border-top:0}
+.dot{flex:none;width:14px;height:14px;border-radius:50%}
+.rowtxt{flex:1;min-width:0}
+.nm{font-weight:700;font-size:18px;overflow-wrap:anywhere;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sub{font-size:14px;opacity:.8}
+.tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.18)}
+.ctl{display:flex;gap:4px}
+.ib{appearance:none;border:0;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font:700 18px var(--body);cursor:pointer}
+.ib:disabled{opacity:.3;cursor:not-allowed}
+.sect{display:flex;flex-direction:column;gap:10px}
+.sect-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+
+.target{border-radius:20px;padding:18px 16px;background:var(--c);color:var(--ink);border-top:3px dashed rgba(18,18,59,.45);border-bottom:3px dashed rgba(18,18,59,.45);border-radius:0;margin:0 -16px;padding-left:16px;padding-right:16px}
+.target .eyebrow{opacity:.75}
+.target .tname{font:800 clamp(34px,11vw,52px)/1 var(--display);font-variation-settings:"wdth" 80;overflow-wrap:anywhere}
+.chips{display:flex;gap:8px}
+.chip{appearance:none;flex:1;min-height:48px;border:0;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font:700 16px var(--body);cursor:pointer}
+.chip[aria-pressed=true]{background:#fff;color:var(--ink)}
+.chip:disabled{cursor:not-allowed;opacity:.7}
+.chip[aria-pressed=true]:disabled{opacity:1}
+.prog{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-weight:600;font-size:15px}
+.pill.ok{background:#fff;color:var(--ink)}
+
+.head{background:var(--blue-deep);border-radius:20px;overflow:hidden}
+.head .top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px 12px}
+.who{font:800 21px/1.1 var(--display);font-variation-settings:"wdth" 88;overflow-wrap:anywhere}
+.kindtag{flex:none;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.16)}
+.band{background:var(--c);color:var(--ink);padding:22px 16px;border-top:3px dashed rgba(18,18,59,.45);border-bottom:3px dashed rgba(18,18,59,.45);text-align:center}
+.band .word{font:800 clamp(32px,10.5vw,50px)/1.02 var(--display);font-variation-settings:"wdth" 80;text-wrap:balance;overflow-wrap:anywhere}
+.head .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px 14px;min-height:70px}
+.head .foot .note{font-size:15px;font-weight:600}
+.head.solved{opacity:.62}
+.mine.hidden .band{background:var(--ink);color:var(--c)}
+.mine.hidden .word{letter-spacing:.2em}
+.mine.revealed{animation:pop .45s ease-out}
+@keyframes pop{0%{transform:scale(.92)}60%{transform:scale(1.03)}100%{transform:scale(1)}}
+.rank{flex:none;width:38px;height:38px;border-radius:50%;background:var(--sun);color:var(--ink);display:grid;place-items:center;font:800 19px var(--display)}
+.rank.none{background:rgba(255,255,255,.16);color:#fff}
+.stat{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.bar{position:sticky;bottom:max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.res-word{font:800 24px/1.05 var(--display);font-variation-settings:"wdth" 82;overflow-wrap:anywhere}
+.center{text-align:center}
+.viewas{background:#fff;color:var(--ink);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.viewas[hidden]{display:none}
+.viewas .eyebrow{color:var(--ink)}
+.viewas .chips{flex-wrap:wrap}
+.viewas .chip{flex:none;min-height:44px;padding:0 14px;background:#E6E7FA;color:var(--ink)}
+.viewas .chip[aria-pressed=true]{background:var(--ink);color:#fff}
+@media (prefers-reduced-motion:reduce){.mine.revealed{animation:none}.btn,.tile{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main class="col">
+    <header class="brand"><b><i></i>Headcase</b><span id="topright"></span></header>
+    <div id="banner" class="banner" role="status" aria-live="polite" hidden><span id="bannertext"></span><button id="bannerx" type="button" aria-label="Dismiss">&times;</button></div>
+    <div id="viewas" class="viewas" hidden></div>
+    <div id="view"></div>
+  </main>
+</div>
+<noscript><p style="padding:16px">This game needs JavaScript.</p></noscript>
+
+<script>
+(() => {
+'use strict';
+
+const KINDS = ['Person', 'Place', 'Thing'];
+const HINT = { Person: 'e.g. Dolly Parton', Place: 'e.g. Grand Canyon', Thing: 'e.g. A traffic cone' };
+const ARTICLE = { Person: 'a person', Place: 'a place', Thing: 'a thing' };
+const COLORS = ['#FFD83D', '#FF8A75', '#5EEAC0', '#FF9AD5', '#82D8FF', '#C9F26B', '#FFB347', '#C9AEFF', '#3FD9E0', '#F2F2F2'];
+const MIN_PLAYERS = 3, MAX_PLAYERS = 10;
+
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+function fill(el, ...kids) { el.replaceChildren(...kids.flat(Infinity).filter(k => k != null && k !== false)); }
+const store = {
+  get(k) { try { return localStorage.getItem('hn:' + k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem('hn:' + k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem('hn:' + k); } catch (e) {} }
+};
+function makePid() {
+  const a = new Uint8Array(16);
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  return Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const S = {
+  ws: null, status: 'connecting', V: null, needPw: false, wrongPw: false,
+  pid: store.get('pid') || '', pw: store.get('pw') || '', name: store.get('name') || '',
+  err: '', notice: '', confirm: '', busy: false, retry: 0
+};
+if (!S.pid) { S.pid = makePid(); store.set('pid', S.pid); }
+
+/* ---------- state helpers (everything comes from the server's view) ---------- */
+const V = () => S.V;
+const P = id => (S.V ? S.V.players.find(p => p.id === id) : null);
+const isHost = () => !!S.V && S.V.host === S.V.real;
+const colorOf = id => { const p = P(id); return COLORS[(p ? p.ci : 0) % COLORS.length]; };
+const cleanName = () => (S.name || '').replace(/\s+/g, ' ').trim().slice(0, 16);
+const cleanWord = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+const bots = () => (S.V ? S.V.players.filter(p => p.bot) : []);
+const nameOf = id => { const p = P(id); return p ? p.name : ''; };
+function nextOf(id) { const ps = S.V.players, i = ps.findIndex(p => p.id === id); return ps[(i + 1) % ps.length]; }
+
+/* ---------- connection ---------- */
+function send(o) {
+  if (S.ws && S.ws.readyState === 1) { S.ws.send(JSON.stringify(o)); return true; }
+  S.err = 'Not connected yet. One moment.'; render();
+  return false;
+}
+function hello() { send({ t: 'hello', pid: S.pid, password: S.pw, code: store.get('code') || '' }); }
+function connect() {
+  let ws;
+  try { ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'); }
+  catch (e) { scheduleRetry(); return; }
+  S.ws = ws;
+  ws.onopen = () => { S.retry = 0; hello(); };
+  ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } onMsg(m); };
+  ws.onclose = () => { if (S.ws === ws) { S.status = 'closed'; S.busy = false; render(); scheduleRetry(); } };
+  ws.onerror = () => {};
+}
+function scheduleRetry() { S.retry++; setTimeout(connect, Math.min(8000, 400 * S.retry)); }
+function onMsg(m) {
+  S.status = 'open';
+  if (m.t === 'need_password') { S.needPw = true; S.wrongPw = !!m.wrong; S.busy = false; if (m.wrong) { S.pw = ''; store.del('pw'); } render(); return; }
+  if (m.t === 'home') {
+    S.needPw = false; S.V = null; S.busy = false; S.confirm = '';
+    store.del('code'); if (S.pw) store.set('pw', S.pw);
+    if (m.notice) S.notice = m.notice;
+    render(); return;
+  }
+  if (m.t === 'state') {
+    S.needPw = false; S.V = m.v; S.busy = false; S.err = '';
+    store.set('code', m.v.code); if (S.pw) store.set('pw', S.pw);
+    render(); return;
+  }
+  if (m.t === 'error') { S.err = m.msg; S.busy = false; render(); }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (!S.ws || S.ws.readyState > 1) connect();
+  else if (S.ws.readyState === 1 && S.V) S.ws.send(JSON.stringify({ t: 'sync' }));
+});
+
+/* ---------- actions ---------- */
+function createRoom() {
+  const name = cleanName();
+  if (!name) { S.err = 'Add your name first.'; render(); return; }
+  S.busy = true; S.err = ''; S.notice = ''; render();
+  if (!send({ t: 'create', name })) { S.busy = false; render(); }
+}
+function joinRoom(code) {
+  const name = cleanName();
+  if (!name) { S.err = 'Add your name first.'; render(); return; }
+  S.busy = true; S.err = ''; S.notice = ''; render();
+  if (!send({ t: 'join', code, name })) { S.busy = false; render(); }
+}
+let confirmTimer = null;
+function askConfirm(what) {
+  S.confirm = what; render();
+  clearTimeout(confirmTimer);
+  confirmTimer = setTimeout(() => { S.confirm = ''; render(); }, 4000);
+}
+
+/* ---------- views ---------- */
+const VIEWS = {};
+let cur = null;
+
+VIEWS.connecting = (() => ({
+  build(root) { root.append(h('div', { class: 'stack' }, h('h2', null, 'Connecting'), h('p', { class: 'lede', id: 'cmsg' }))); },
+  update() { $('#cmsg').textContent = S.retry > 1 ? 'Waking the server up. This can take up to a minute the first time.' : 'One second.'; }
+}))();
+
+VIEWS.password = (() => {
+  let input, btn;
+  const submit = () => { if (!input.value) return; S.pw = input.value; S.needPw = true; S.busy = true; render(); hello(); };
+  return {
+    build(root) {
+      input = h('input', { id: 'pw', type: 'text', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', placeholder: 'Password' });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+      btn = h('button', { class: 'btn primary', type: 'button', id: 'pwgo', onclick: submit }, 'Enter');
+      root.append(h('div', { class: 'stack' }, h('h1', { class: 'hero' }, 'Password, please.'), h('p', { class: 'lede' }, 'Ask whoever sent you the link.')),
+        h('div', { class: 'field' }, h('label', { for: 'pw' }, 'Password'), input), btn);
+    },
+    update() { btn.disabled = S.busy; }
+  };
+})();
+
+VIEWS.home = (() => {
+  let nameIn, codeIn, createBtn, joinBtn;
+  const refresh = () => {
+    const ok = S.status === 'open' && !S.busy;
+    createBtn.disabled = !ok;
+    joinBtn.disabled = !ok || codeIn.value.length !== 4;
+    createBtn.textContent = S.busy ? 'Working...' : 'Start a room';
+    joinBtn.textContent = S.busy ? 'Working...' : 'Join room';
+  };
+  return {
+    build(root) {
+      nameIn = h('input', { id: 'name', type: 'text', maxlength: '16', autocomplete: 'nickname', autocapitalize: 'words', placeholder: 'Your first name', value: S.name });
+      nameIn.addEventListener('input', () => { S.name = nameIn.value; store.set('name', cleanName()); });
+      codeIn = h('input', { id: 'code', class: 'codein', type: 'text', maxlength: '4', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'ABCD' });
+      codeIn.addEventListener('input', () => { codeIn.value = codeIn.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); refresh(); });
+      codeIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !joinBtn.disabled) joinRoom(codeIn.value); });
+      createBtn = h('button', { class: 'btn primary', type: 'button', id: 'create', onclick: createRoom });
+      joinBtn = h('button', { class: 'btn ghost', type: 'button', id: 'join', onclick: () => joinRoom(codeIn.value) });
+      root.append(
+        h('div', { class: 'stack' },
+          h('h1', { class: 'hero' }, 'Guess what is on your forehead.'),
+          h('p', { class: 'lede' }, 'Everyone writes a person, place or thing for the player on their left. Everyone sees it except them.')),
+        h('div', { class: 'field' }, h('label', { for: 'name' }, 'Your name'), nameIn),
+        createBtn,
+        h('div', { class: 'or' }, 'or join a room'),
+        h('div', { class: 'field' }, h('label', { for: 'code' }, 'Room code'), codeIn),
+        joinBtn,
+        h('ol', { class: 'how' },
+          h('li', null, 'Everyone joins with the four-letter code.'),
+          h('li', null, 'Write something for the player on your left.'),
+          h('li', null, 'Ask the table yes or no questions until you guess yours.'))
+      );
+    },
+    update() { refresh(); }
+  };
+})();
+
+VIEWS.lobby = (() => {
+  let list, actions, tilesBox;
+  let builtFor = '';
+  return {
+    build(root) {
+      builtFor = S.V.code;
+      tilesBox = h('div', { class: 'tiles', 'aria-label': 'Room code ' + S.V.code.split('').join(' ') }, S.V.code.split('').map(c => h('div', { class: 'tile', 'aria-hidden': 'true' }, c)));
+      list = h('ul', { class: 'panel' });
+      actions = h('div', { class: 'stack' });
+      root.append(
+        h('div', { class: 'codebox' }, h('div', { class: 'eyebrow' }, 'Room code'), tilesBox,
+          h('p', { class: 'small' }, 'Open this page on your phone, tap Join room and type the code.')),
+        h('section', { class: 'sect' }, h('div', { class: 'sect-h' }, h('h2', null, 'Players'), h('span', { class: 'small', id: 'pcount' })), list),
+        actions,
+        h('button', { class: 'link', type: 'button', id: 'leave', onclick: () => send({ t: 'leave' }) }, 'Leave room')
+      );
+    },
+    update() {
+      const v = S.V, ps = v.players, host = isHost(), n = ps.length;
+      $('#pcount').textContent = n + (n === 1 ? ' player' : ' players');
+      fill(list, ps.map((p, i) => {
+        const t = ps[(i + 1) % n];
+        return h('li', { class: 'row' },
+          h('span', { class: 'dot', style: 'background:' + colorOf(p.id) }),
+          h('div', { class: 'rowtxt' },
+            h('div', { class: 'nm' }, p.name,
+              p.id === v.real && h('span', { class: 'tag' }, 'you'),
+              p.id === v.host && h('span', { class: 'tag' }, 'host'),
+              p.bot && h('span', { class: 'tag' }, 'test'),
+              !p.connected && h('span', { class: 'tag' }, 'away')),
+            n > 1 && h('div', { class: 'sub' }, 'writes for ' + t.name)),
+          host && h('div', { class: 'ctl' },
+            h('button', { class: 'ib', type: 'button', 'aria-label': 'Move ' + p.name + ' up', disabled: i === 0, onclick: () => send({ t: 'move', id: p.id, dir: -1 }) }, '↑'),
+            h('button', { class: 'ib', type: 'button', 'aria-label': 'Move ' + p.name + ' down', disabled: i === n - 1, onclick: () => send({ t: 'move', id: p.id, dir: 1 }) }, '↓'),
+            p.id !== v.real && h('button', { class: 'ib', type: 'button', 'aria-label': 'Remove ' + p.name, onclick: () => send({ t: 'kick', id: p.id }) }, '✕')));
+      }));
+      const hostName = nameOf(v.host) || 'the host';
+      fill(actions,
+        h('p', { class: 'small' }, 'Each player writes for the name below them, and the last name writes for the first. Order the list clockwise around the table so everyone writes for the person on their left.'),
+        host && h('button', { class: 'btn ghost', type: 'button', id: 'shuffle', disabled: n < 2, onclick: () => send({ t: 'shuffle' }) }, 'Shuffle seats'),
+        host && h('div', { class: 'panel stack', style: 'padding:14px 16px;gap:10px' },
+          h('div', { class: 'eyebrow' }, 'Testing on your own?'),
+          h('p', { class: 'small' }, 'Add fake players, then switch between their screens once the round starts.'),
+          h('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' },
+            h('button', { class: 'btn sm ghost', type: 'button', id: 'addbots', disabled: n >= MAX_PLAYERS, onclick: () => send({ t: 'addbots' }) }, 'Add test players'),
+            bots().length > 0 && h('button', { class: 'btn sm ghost', type: 'button', id: 'rmbots', onclick: () => send({ t: 'removebots' }) }, 'Remove test players'))),
+        host
+          ? h('button', { class: 'btn primary', type: 'button', id: 'start', disabled: n < MIN_PLAYERS, onclick: () => send({ t: 'start' }) }, n < MIN_PLAYERS ? 'Need ' + (MIN_PLAYERS - n) + ' more to start' : 'Everyone is in. Start')
+          : h('p', { class: 'center eyebrow' }, 'Waiting for ' + hostName + ' to start'));
+    }
+  };
+})();
+
+VIEWS.write = (() => {
+  let draft, target, tname, chips, input, lockBtn, prog, hostBox;
+  function refreshBtn() {
+    const locked = !!P(S.V.me).ready;
+    lockBtn.textContent = locked ? 'Edit my pick' : 'Lock it in';
+    lockBtn.classList.toggle('ghost', locked);
+    lockBtn.classList.toggle('primary', !locked);
+    lockBtn.disabled = !locked && !cleanWord(draft.word);
+  }
+  function toggleLock() {
+    if (P(S.V.me).ready) send({ t: 'unlock' });
+    else { const word = cleanWord(draft.word); if (word) send({ t: 'lock', word, kind: draft.kind }); }
+  }
+  const api = {
+    build(root) {
+      const d = S.V.draft || { word: '', kind: 'Person' };
+      draft = { word: d.word || '', kind: d.kind || 'Person' };
+      tname = h('div', { class: 'tname' });
+      target = h('div', { class: 'target' }, h('div', { class: 'eyebrow' }, 'Write something for'), tname);
+      chips = KINDS.map(k => h('button', { class: 'chip', type: 'button', 'data-kind': k, 'aria-pressed': 'false', onclick: () => { draft.kind = k; api.update(); } }, k));
+      input = h('input', { id: 'word', type: 'text', maxlength: '40', autocomplete: 'off', autocapitalize: 'words', 'aria-label': 'Your word' });
+      input.value = draft.word;
+      input.addEventListener('input', () => { draft.word = input.value; refreshBtn(); });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter' && !lockBtn.disabled) toggleLock(); });
+      lockBtn = h('button', { class: 'btn primary', type: 'button', id: 'lock', onclick: toggleLock });
+      prog = h('div', { class: 'prog' });
+      hostBox = h('div', { class: 'stack' });
+      root.append(
+        h('div', { class: 'stack' }, h('div', { class: 'eyebrow' }, 'Round ' + S.V.round),
+          h('p', { class: 'lede' }, 'This player sits on your left. Pick something they will have to guess, and keep it to yourself.')),
+        target,
+        h('div', { class: 'field' }, h('span', { class: 'eyebrow' }, 'It is...'), h('div', { class: 'chips', role: 'group', 'aria-label': 'Type' }, chips)),
+        h('div', { class: 'field' }, h('label', { for: 'word' }, 'Your pick'), input),
+        lockBtn,
+        h('section', { class: 'sect' }, h('div', { class: 'sect-h' }, h('h2', null, 'Locked in'), h('span', { class: 'small', id: 'wcount' })), prog),
+        hostBox
+      );
+    },
+    update() {
+      const v = S.V, me = P(v.me), locked = !!me.ready;
+      tname.textContent = v.target ? nameOf(v.target) : '';
+      target.style.setProperty('--c', v.target ? colorOf(v.target) : COLORS[0]);
+      chips.forEach(c => { c.setAttribute('aria-pressed', String(c.dataset.kind === draft.kind)); c.disabled = locked; });
+      input.disabled = locked;
+      input.placeholder = HINT[draft.kind];
+      refreshBtn();
+      const done = v.players.filter(p => p.ready).length;
+      $('#wcount').textContent = done + ' of ' + v.players.length;
+      fill(prog, v.players.map(p => h('span', { class: 'pill' + (p.ready ? ' ok' : '') }, (p.ready ? '✓ ' : '') + p.name)));
+      if (isHost()) {
+        const waiting = v.players.filter(p => !p.ready).map(p => p.name);
+        fill(hostBox,
+          bots().some(b => !b.ready) && h('button', { class: 'btn ghost', type: 'button', id: 'autofill', onclick: () => send({ t: 'autofill' }) }, 'Fill in for test players'),
+          h('button', { class: 'btn primary', type: 'button', id: 'startplay', disabled: waiting.length > 0, onclick: () => send({ t: 'startplay' }) }, waiting.length ? 'Waiting on ' + waiting.join(', ') : 'Start the round'));
+      } else {
+        fill(hostBox, h('p', { class: 'center eyebrow' }, (nameOf(v.host) || 'The host') + ' starts the round when everyone is locked in'));
+      }
+    }
+  };
+  return api;
+})();
+
+VIEWS.play = (() => {
+  let dyn;
+  return {
+    build(root) { dyn = h('div', { id: 'playbox', class: 'stack', style: 'gap:22px' }); root.append(dyn); },
+    update() {
+      const v = S.V, host = isHost(), me = v.me;
+      const finished = v.players.filter(p => v.solved[p.id]).length;
+      const myCardData = v.cards[me], myD = v.solved[me];
+      const revealed = !!(myD && myCardData && myCardData.word);
+      const myCard = h('article', { class: 'head mine ' + (revealed ? 'revealed' : 'hidden'), style: '--c:' + colorOf(me), id: 'mycard' },
+        h('div', { class: 'top' }, h('span', { class: 'who' }, 'Your headband'), myCardData && h('span', { class: 'kindtag' }, ARTICLE[myCardData.kind] || '')),
+        h('div', { class: 'band' }, h('div', { class: 'word' }, revealed ? myCardData.word : '? ? ?')),
+        h('div', { class: 'foot' },
+          revealed
+            ? h('span', { class: 'note' }, myD.gaveUp ? 'Revealed. Written by ' + myCardData.by + '.' : 'You got it, number ' + myD.rank + '. Written by ' + myCardData.by + '.')
+            : h('span', { class: 'note' }, 'Ask the table yes or no questions. Say your guess out loud.'),
+          !revealed && h('button', { class: 'btn sm ghost', type: 'button', id: 'giveup', onclick: () => S.confirm === 'giveup' ? (S.confirm = '', send({ t: 'giveup' })) : askConfirm('giveup') }, S.confirm === 'giveup' ? 'Tap to reveal' : 'Give up')));
+      const others = v.players.filter(p => p.id !== me).map(p => {
+        const c = v.cards[p.id], d = v.solved[p.id];
+        return h('article', { class: 'head' + (d ? ' solved' : ''), style: '--c:' + colorOf(p.id), 'data-pid': p.id },
+          h('div', { class: 'top' }, h('span', { class: 'who' }, p.name), c && h('span', { class: 'kindtag' }, ARTICLE[c.kind] || '')),
+          h('div', { class: 'band' }, h('div', { class: 'word' }, c && c.word ? c.word : '...')),
+          h('div', { class: 'foot' },
+            d
+              ? [h('span', { class: d.gaveUp ? 'rank none' : 'rank' }, d.gaveUp ? '-' : d.rank), h('span', { class: 'note' }, d.gaveUp ? 'Gave up' : 'Got it'),
+                 h('button', { class: 'link', type: 'button', onclick: () => send({ t: 'undo', target: p.id }) }, 'Undo')]
+              : [h('span', { class: 'note' }, 'Their headband'), h('button', { class: 'btn sm primary', type: 'button', onclick: () => send({ t: 'solve', target: p.id }) }, 'They got it')]));
+      });
+      fill(dyn,
+        h('div', { class: 'stat' }, h('h2', null, 'Round ' + v.round), h('span', { class: 'small' }, finished + ' of ' + v.players.length + ' done')),
+        myCard,
+        h('section', { class: 'sect' }, h('div', { class: 'stack', style: 'gap:4px' }, h('h2', null, 'Everyone else'), h('span', { class: 'small' }, 'You can see their words. They cannot.')), others),
+        host && h('div', { class: 'bar' },
+          finished === v.players.length
+            ? h('button', { class: 'btn primary', type: 'button', id: 'results', onclick: () => send({ t: 'end' }) }, 'Show results')
+            : h('button', { class: 'btn ghost', type: 'button', id: 'endgame', style: 'background:var(--blue)', onclick: () => S.confirm === 'end' ? (S.confirm = '', send({ t: 'end' })) : askConfirm('end') }, S.confirm === 'end' ? 'Tap again to end the round' : 'End round')));
+    }
+  };
+})();
+
+VIEWS.done = (() => {
+  let dyn;
+  return {
+    build(root) { dyn = h('div', { class: 'stack', style: 'gap:22px' }); root.append(dyn); },
+    update() {
+      const v = S.V;
+      const rows = v.players.map(p => ({ p, d: v.solved[p.id], c: v.cards[p.id] }));
+      const won = rows.filter(r => r.d && !r.d.gaveUp).sort((a, b) => a.d.rank - b.d.rank);
+      const rest = rows.filter(r => !(r.d && !r.d.gaveUp));
+      const row = r => h('li', { class: 'row' },
+        h('span', { class: r.d && !r.d.gaveUp ? 'rank' : 'rank none' }, r.d && !r.d.gaveUp ? r.d.rank : '-'),
+        h('div', { class: 'rowtxt' },
+          h('div', { class: 'nm' }, r.p.name, r.p.id === v.real && h('span', { class: 'tag' }, 'you')),
+          h('div', { class: 'res-word' }, r.c && r.c.word ? r.c.word : '...'),
+          r.c && h('div', { class: 'sub' }, (ARTICLE[r.c.kind] || '') + ', written by ' + r.c.by)));
+      const hn = nameOf(v.host) || 'The host';
+      fill(dyn,
+        h('div', { class: 'stack' }, h('div', { class: 'eyebrow' }, 'Round ' + v.round + ' results'),
+          h('h1', { class: 'hero' }, won.length ? won[0].p.name + ' got there first.' : 'Nobody got there.')),
+        won.length > 0 && h('section', { class: 'sect' }, h('h2', null, 'Guessed'), h('ul', { class: 'panel' }, won.map(row))),
+        rest.length > 0 && h('section', { class: 'sect' }, h('h2', null, 'Not guessed'), h('ul', { class: 'panel' }, rest.map(row))),
+        isHost()
+          ? h('div', { class: 'stack' },
+              h('button', { class: 'btn primary', type: 'button', id: 'again', onclick: () => send({ t: 'again' }) }, 'Play again with new words'),
+              h('button', { class: 'btn ghost', type: 'button', id: 'tolobby', onclick: () => send({ t: 'tolobby' }) }, 'Back to lobby to add players'))
+          : h('p', { class: 'center eyebrow' }, 'Waiting for ' + hn + ' to pick what is next'),
+        h('div', { class: 'center' }, h('button', { class: 'link', type: 'button', onclick: () => send({ t: 'leave' }) }, 'Leave game')));
+    }
+  };
+})();
+
+function pickKey() {
+  if (!S.V && S.status !== 'open') return 'connecting';
+  if (S.needPw) return 'password';
+  if (!S.V) return 'home';
+  const ph = S.V.phase;
+  if (ph === 'writing') return 'write:' + S.V.round + ':' + S.V.me;
+  if (ph === 'playing') return 'play';
+  if (ph === 'done') return 'done';
+  return 'lobby';
+}
+function updateBanner() {
+  let msg = S.err || S.notice;
+  if (!msg && S.status === 'closed') msg = 'Connection lost. Reconnecting...';
+  if (!msg && S.needPw && S.wrongPw) msg = 'That password did not work.';
+  const b = $('#banner');
+  b.hidden = !msg;
+  $('#bannertext').textContent = msg || '';
+}
+function updateViewAs() {
+  const el = $('#viewas'), v = S.V;
+  const show = !!v && v.phase !== 'lobby' && isHost() && bots().length > 0;
+  el.hidden = !show;
+  if (!show) { el.replaceChildren(); return; }
+  fill(el,
+    h('div', { class: 'eyebrow' }, !v.viewing ? 'Test mode: view as' : 'Test mode: you are seeing ' + nameOf(v.me) + "'s screen"),
+    h('div', { class: 'chips', role: 'group', 'aria-label': 'View as' },
+      h('button', { class: 'chip', type: 'button', 'aria-pressed': String(!v.viewing), onclick: () => send({ t: 'viewas', id: null }) }, 'Me'),
+      bots().map(b => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(v.me === b.id), onclick: () => send({ t: 'viewas', id: b.id }) }, b.name))));
+}
+function render() {
+  const key = pickKey(), name = key.split(':')[0];
+  if (cur !== key) { $('#view').replaceChildren(); cur = key; VIEWS[name].build($('#view')); }
+  VIEWS[name].update();
+  $('#topright').textContent = S.V ? 'Room ' + S.V.code : '';
+  updateBanner();
+  updateViewAs();
+}
+$('#bannerx').addEventListener('click', () => { S.err = ''; S.notice = ''; updateBanner(); });
+
+render();
+connect();
+setInterval(() => { if (S.ws && S.ws.readyState === 1) S.ws.send('{"t":"ping"}'); }, 25000);
+})();
+</script>
+</body>
+</html>
