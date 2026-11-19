@@ -118,6 +118,8 @@ input.codein{text-align:center;text-transform:uppercase;letter-spacing:.4em;padd
 .bar{position:sticky;bottom:max(8px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;padding-top:6px}
 .res-word{font:800 24px/1.05 var(--display);font-variation-settings:"wdth" 82;overflow-wrap:anywhere}
 .center{text-align:center}
+.notes{display:block;width:100%;min-height:120px;border:0;border-radius:14px;padding:12px 14px;font:500 17px/1.4 var(--body);color:var(--ink);background:#fff;resize:vertical}
+.notes::placeholder{color:#8486B8}
 .viewas{background:#fff;color:var(--ink);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .viewas[hidden]{display:none}
 .viewas .eyebrow{color:var(--ink)}
@@ -179,7 +181,7 @@ function makePid() {
 const S = {
   ws: null, status: 'connecting', V: null, needPw: false, wrongPw: false,
   pid: store.get('pid') || '', pw: store.get('pw') || '', name: store.get('name') || '',
-  err: '', notice: '', confirm: '', busy: false, retry: 0
+  err: '', notice: '', confirm: '', busy: false, retry: 0, notes: {}, noteRound: ''
 };
 if (!S.pid) { S.pid = makePid(); store.set('pid', S.pid); }
 
@@ -193,6 +195,27 @@ const cleanWord = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 40);
 const bots = () => (S.V ? S.V.players.filter(p => p.bot) : []);
 const nameOf = id => { const p = P(id); return p ? p.name : ''; };
 function nextOf(id) { const ps = S.V.players, i = ps.findIndex(p => p.id === id); return ps[(i + 1) % ps.length]; }
+
+/* ---------- private notes (stay on this phone; cleared each round and when you leave) ---------- */
+function getNotes(k) {
+  if (!(k in S.notes)) S.notes[k] = store.get('notes:' + k) || '';
+  return S.notes[k];
+}
+function setNotes(k, v) {
+  S.notes[k] = v;
+  if (v) store.set('notes:' + k, v); else store.del('notes:' + k);
+}
+function dropNotes(keep) { // keep: 'CODE:ROUND' to preserve, or '' to drop everything
+  S.notes = {};
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('hn:notes:')) continue;
+      const parts = k.slice(9).split(':');
+      if (!keep || parts[0] + ':' + parts[1] !== keep) localStorage.removeItem(k);
+    }
+  } catch (e) {}
+}
 
 /* ---------- connection ---------- */
 function send(o) {
@@ -218,11 +241,14 @@ function onMsg(m) {
   if (m.t === 'home') {
     S.needPw = false; S.V = null; S.busy = false; S.confirm = '';
     store.del('code'); if (S.pw) store.set('pw', S.pw);
+    dropNotes(''); S.noteRound = '';
     if (m.notice) S.notice = m.notice;
     render(); return;
   }
   if (m.t === 'state') {
     S.needPw = false; S.V = m.v; S.busy = false; S.err = '';
+    const nr = m.v.code + ':' + m.v.round;
+    if (nr !== S.noteRound) { S.noteRound = nr; dropNotes(nr); }
     store.set('code', m.v.code); if (S.pw) store.set('pw', S.pw);
     render(); return;
   }
@@ -431,11 +457,25 @@ VIEWS.write = (() => {
 })();
 
 VIEWS.play = (() => {
-  let dyn;
+  let top, bottom, notesTa, notesKey = '';
   return {
-    build(root) { dyn = h('div', { id: 'playbox', class: 'stack', style: 'gap:22px' }); root.append(dyn); },
+    build(root) {
+      top = h('div', { class: 'stack', style: 'gap:22px' });
+      bottom = h('div', { class: 'stack', style: 'gap:22px' });
+      notesTa = h('textarea', { id: 'notes', class: 'notes', rows: '4', maxlength: '2000', 'aria-label': 'Your notes', placeholder: 'Jot down your questions and the answers. Alive? No. Famous? Yes.' });
+      notesTa.addEventListener('input', () => { if (notesKey) setNotes(notesKey, notesTa.value); });
+      const clearBtn = h('button', { class: 'link', type: 'button', id: 'clearnotes', onclick: () => { notesTa.value = ''; if (notesKey) setNotes(notesKey, ''); notesTa.focus(); } }, 'Clear notes');
+      const notes = h('section', { class: 'sect', id: 'notesbox' },
+        h('div', { class: 'sect-h' }, h('h2', null, 'Your notes'), clearBtn),
+        notesTa,
+        h('span', { class: 'small' }, 'Only you can see these. They clear when the next round starts.'));
+      root.append(h('div', { id: 'playbox', class: 'stack', style: 'gap:22px' }, top, notes, bottom));
+      notesKey = '';
+    },
     update() {
       const v = S.V, host = isHost(), me = v.me;
+      const nk = v.code + ':' + v.round + ':' + v.me;
+      if (nk !== notesKey) { notesKey = nk; notesTa.value = getNotes(nk); }
       const finished = v.players.filter(p => v.solved[p.id]).length;
       const myCardData = v.cards[me], myD = v.solved[me];
       const revealed = !!(myD && myCardData && myCardData.word);
@@ -458,9 +498,10 @@ VIEWS.play = (() => {
                  h('button', { class: 'link', type: 'button', onclick: () => send({ t: 'undo', target: p.id }) }, 'Undo')]
               : [h('span', { class: 'note' }, 'Their headband'), h('button', { class: 'btn sm primary', type: 'button', onclick: () => send({ t: 'solve', target: p.id }) }, 'They got it')]));
       });
-      fill(dyn,
+      fill(top,
         h('div', { class: 'stat' }, h('h2', null, 'Round ' + v.round), h('span', { class: 'small' }, finished + ' of ' + v.players.length + ' done')),
-        myCard,
+        myCard);
+      fill(bottom,
         h('section', { class: 'sect' }, h('div', { class: 'stack', style: 'gap:4px' }, h('h2', null, 'Everyone else'), h('span', { class: 'small' }, 'You can see their words. They cannot.')), others),
         host && h('div', { class: 'bar' },
           finished === v.players.length
